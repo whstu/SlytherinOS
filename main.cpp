@@ -6,14 +6,16 @@
 #include <iostream>
 #include <cstring>
 #include <ctime>
+#include <fstream>
 #define S(i) Sleep(i)
 #define cls system("cls");
 #define ei else if
 using namespace std;
+bool agreedshutdown = false; //判断是否关闭
 //项目名称
 long long recentnum = 15, projectnum = 15, settingnum = 3;
-string recentfilename[1010100]  = {" ", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"};
-string projectfilename[1010100] = {" ", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"};
+string recentfilename[1010100]  = {};
+string projectfilename[1010100] = {};
 string settingfilename[1010100] = {" ", "声音", "亮度", "关于"};
 //--------
 HWND hwnd = GetConsoleWindow();
@@ -60,6 +62,41 @@ struct CMDset {
 	}
 } cmdset;
 struct Start {
+	struct Fileinput { /*注入文件名*/
+		void recentfileinput() {
+			CreateDirectory("./files",NULL );
+			ifstream recent("./files/recent.whstu");
+			if (!recent.is_open()) {
+				ofstream recent_create("./files/recent.whstu");//如果文件不存在就创建文件
+				recent_create.close();
+			}
+			string line;
+			recentfilename[0] = {" "};
+			long long i = 1;
+			while (getline(recent, line)) {
+				recentfilename[i] = line;
+				i++;
+			}
+			recentnum = i - 1;
+		}
+		void projectfileinput() {
+			CreateDirectory("./files",NULL );
+			ifstream project("./files/project.whstu");
+			if (!project.is_open()) {
+				ofstream project_create("./files/project.whstu");//如果文件不存在就创建文件
+				project_create.close();
+			}
+			string line;
+			projectfilename[0] = {" "};
+			long long i = 1;
+			while (getline(project, line)) {
+				projectfilename[i] = line;
+				i++;
+			}
+			projectnum = i - 1;
+		}
+	} fileinput;
+
 	void powerOn() {
 		ShowWindow(hwnd, SW_MAXIMIZE);
 		cmdset.setfont(30);
@@ -142,10 +179,29 @@ struct Start {
 		system("ipconfig");
 		S(100);
 		cls
+		cout << "正在导入文件...";
+		fileinput.projectfileinput();
+		fileinput.recentfileinput();
+		cout << "\n完成。\n";
+		S(100);
 		cout << "欢迎...";
 	}
 } start;
 //apps
+struct Filemanager { /*文件管理*/
+	void createfile(string name) {
+		return;
+	}
+	void deletefile(string name) {
+		return;
+	}
+	void fileinfo(string name) {
+		return;
+	}
+	void editfile(string name) {
+		return;
+	}
+} filemanager;
 struct Setting {
 	void voice() {
 		return;
@@ -181,8 +237,16 @@ struct Setting {
 		SetColorAndBackground(7, 0);
 		S(3000);
 		cout << "\n";
-		cout << "\nSlytherin OS 0.2_Build20240805152000 Developer Beta 2\n";
-		cout << "\n版本代号000215\n";
+		//写入版本号 
+		CreateDirectory("./info",NULL );
+		ofstream info("./info/info.txt");
+		info<<"Slytherin OS 0.2_Build20240807152900_DeveloperBeta3"<<endl;
+		info<<"版本代号:000217"<<endl;
+		info<<"注意：请不要在此处留下重要信息，因为此文件会被SlytherinOS覆盖！";
+		info.close();
+		//----------
+		cout << "\nSlytherin OS 0.2_Build20240807152900_DeveloperBeta3\n";
+		cout << "\n版本代号000217\n";
 		cout << "\nSlytherin OS\n";
 		cout << "\n卓然第三帝国联合赞助\n";
 		cout << "\n按b返回";
@@ -242,6 +306,18 @@ struct Launcher {
 					case 'b': {
 						return;
 					}
+					case 'a': {
+						return;
+					}
+					case 'd': {
+						return;
+					}
+					case 'w': {
+						return;
+					}
+					case 's': {
+						return;
+					}
 				}
 			}
 		}
@@ -251,7 +327,7 @@ struct Launcher {
 		//初始化
 		gotoxy(0, 3);
 		SetColorAndBackground(7, 0);
-		for (int i = 0; i < 15; i++) {
+		for (int i = 0; i < projectnum + 3; i++) {
 			cout << "                              \n";
 		}
 		gotoxy(0, 3);
@@ -313,7 +389,7 @@ struct Launcher {
 		//初始化
 		gotoxy(0, 3);
 		SetColorAndBackground(7, 0);
-		for (int i = 0; i < 15; i++) {
+		for (int i = 0; i < max(recentnum, settingnum) + 3; i++) {
 			cout << "                              \n";
 		}
 		gotoxy(0, 3);
@@ -375,7 +451,7 @@ struct Launcher {
 		//初始化
 		gotoxy(0, 3);
 		SetColorAndBackground(7, 0);
-		for (int i = 0; i < 15; i++) {
+		for (int i = 0; i < projectnum + 3; i++) {
 			cout << "                              \n";
 		}
 		gotoxy(0, 3);
@@ -525,7 +601,7 @@ struct Launcher {
 		}
 	}
 } launcher;
-void shutdownagreement() {
+void shutdownagreement() {//关闭提示
 	cls
 	cout << "确实要关闭吗？(y/n)";
 	while (1) {
@@ -533,10 +609,12 @@ void shutdownagreement() {
 			char x = _getch();
 			switch (x) {
 				case 'y': {
+					agreedshutdown = true;
 					return;
 				}
-				case 'n':{
-					launcher.head();
+				case 'n': {
+					agreedshutdown = false;
+					return;
 				}
 			}
 		}
@@ -553,7 +631,21 @@ int main() {
 	start.prepareStart();
 	S(500);
 	cls
-	launcher.head();
-	shutdownagreement();
+	while (agreedshutdown == false) {
+		ShowWindow(hwnd, SW_MAXIMIZE);
+		cmdset.setfont(16);
+		launcher.head();
+		shutdownagreement();
+	}
 	return 0;
 }
+/*
+Slytherin OS 版本0.2
+最后更新:20240807
+
+更新日志
+20240807
+修复了取消退出后无法控制UI的问题；增加了项目名称读取程序 
+20240805
+UI编写
+*/
